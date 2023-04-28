@@ -9,13 +9,19 @@ const data = {
 
 const getAllStates = async (req,res) =>{
     let states = data.states;
+    for(i = 0; i < data.states.length; i++){
+        const result = await State.find({ stateCode: states[i].code}).exec();
+        if(result.length !== 0){
+            states[i] = {...states[i], "funfacts": result[0].funfacts};
+        }
+    }
     if(req.query.contig === 'true'){
         states = states.filter(state => state.code !== 'AK' && state.code !== 'HI');
     }
     else if(req.query.contig === 'false'){
         states = states.filter(state => state.code === 'AK' || state.code === 'HI');
     }
-        res.json(states);
+    res.json(states);
 }
 
 
@@ -36,10 +42,7 @@ const getState = async (req,res) => {
     }
     else{
         res.status(404);
-        if(req.accepts('html'))
-            res.sendFile(path.join(__dirname, '..', 'views', '404.html'));
-        else if(req.accepts('json'))
-            res.json({"message" : "Invalid state parameter"})
+        res.json({"message" : "Invalid state abbreviation parameter"})
     }
 }
 
@@ -47,54 +50,52 @@ const getState = async (req,res) => {
 
 const getStateData = async (req,res) => {
     const dataHolder = data.states.find(st => st.code === ((req.params.state).toUpperCase()));
-    if(req.params.parameter === 'capital'){
-        const array = {
-            "state": dataHolder.state,
-            "capital": dataHolder.capital_city
-        }
-        res.json(array);
-    }
-    else if(req.params.parameter === 'nickname'){
-        const array = {
-            "state": dataHolder.state,
-            "nickname": dataHolder.nickname
-        }
-        res.json(array);
-    }
-    else if(req.params.parameter === 'population'){
-        const array = {
-            "state": dataHolder.state,
-            "population": dataHolder.population.toLocaleString('en-US')
-        }
-        res.json(array);
-    }
-    else if(req.params.parameter === 'admission'){
-        const array = {
-            "state": dataHolder.state,
-            "admitted": dataHolder.admission_date
-        }
-        res.json(array);
-    }
-    else if(req.params.parameter === 'funfact'){
-        const result = await State.find({ stateCode: dataHolder.code}).exec();
-        if(result.length === 0){
-            res.json({"message": `No Fun Facts found for ${dataHolder.state}`});
-        }
-        else{
-            const funfact = result[0].funfacts
-            const chosenFact = funfact[(Math.floor(Math.random() * funfact.length))];
-            const factArray ={
-                "funfact": chosenFact
+    if(dataHolder){
+        if(req.params.parameter === 'capital'){
+            const array = {
+                "state": dataHolder.state,
+                "capital": dataHolder.capital_city
             }
-            res.json(factArray);
+            res.json(array);
+        }
+        else if(req.params.parameter === 'nickname'){
+            const array = {
+                "state": dataHolder.state,
+                "nickname": dataHolder.nickname
+            }
+            res.json(array);
+        }
+        else if(req.params.parameter === 'population'){
+            const array = {
+                "state": dataHolder.state,
+                "population": dataHolder.population.toLocaleString('en-US')
+            }
+            res.json(array);
+        }
+        else if(req.params.parameter === 'admission'){
+            const array = {
+                "state": dataHolder.state,
+                "admitted": dataHolder.admission_date
+            }
+            res.json(array);
+        }
+        else if(req.params.parameter === 'funfact'){
+            const result = await State.find({ stateCode: dataHolder.code}).exec();
+            if(result.length === 0){
+                res.json({"message": `No Fun Facts found for ${dataHolder.state}`});
+            }
+            else{
+                const funfact = result[0].funfacts
+                const chosenFact = funfact[(Math.floor(Math.random() * funfact.length))];
+                const factArray ={
+                    "funfact": chosenFact
+                }
+                res.json(factArray);
+            }
         }
     }
     else{
-        res.status(404);
-        if(req.accepts('html'))
-            res.sendFile(path.join(__dirname, '..', 'views', '404.html'));
-        else if(req.accepts('json'))
-            res.json({"message" : "Invalid state abbreviation parameter"})
+        res.json({"message" : "Invalid state abbreviation parameter"});
     }
     
 }
