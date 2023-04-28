@@ -11,6 +11,9 @@
     "start": "node server.js",
     "dev": "nodemon server"
   },
+  "engines": {
+    "node": "14.x"
+  },
   "name": "backendfinalproject",
   "version": "1.0.0",
   "main": "server.js",
