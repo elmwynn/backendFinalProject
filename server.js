@@ -5,7 +5,7 @@ const path = require('path');
 const cors = require ('cors');
 const mongoose = require('mongoose');
 const connectDB = require('./config/dbConn')
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3500;
 
 //connect to mongodb
 connectDB();
@@ -14,6 +14,7 @@ connectDB();
 app.use(cors());
 app.use(express.urlencoded({extended:false}));
 app.use(express.json());
+
 
 
 app.use('/', require('./routes/root'));
