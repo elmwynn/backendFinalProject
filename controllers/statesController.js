@@ -101,41 +101,52 @@ const getStateData = async (req,res) => {
 }
 
 const createNewFunFact = async (req,res) =>{
+    const stateUpper = (req.params.state).toUpperCase();
     if(req.params.parameter === 'funfact'){
-        try{
-            const alreadyExists = await State.find({ stateCode: (req.params.state).toUpperCase()}).exec();
-            if(alreadyExists.length === 0){
-                //if the document does not yet exist, create a new one
-                //by creating new code and funfact array
-                const result = await State.create({
-                    stateCode: req.params.state,
-                    funfacts: req.body.funfacts
-                });
-                res.status(201).json(result);
-            }
-            else{
-                //if it does exist already
-                //just add to the array without adding the stateCode
-                const filter = {stateCode: (req.params.state).toUpperCase()};
-                const update = {$push: {funfacts: req.body.funfacts}};
-                await State.findOneAndUpdate(
-                    filter, 
-                    update
-                );
-                const result = await State.find({ stateCode: (req.params.state).toUpperCase()}).exec();
-                res.status(201).json(result);
-            }
-        } catch (err){
-            console.error(err);
+        if(!req?.body?.funfacts){
+            res.status(400).json({"message": "State fun facts value required"});
         }
-    } 
+        else if(!(req.body.funfacts instanceof Array)){
+            res.status(400).json({"message": "State fun facts value must be an array"});
+        }
+        else{
+            try{
+                const alreadyExists = await State.find({ stateCode: stateUpper}).exec();
+                if(alreadyExists.length === 0){
+                    //if the document does not yet exist, create a new one
+                    //by creating new code and funfact array
+                    const result = await State.create({
+                        stateCode: stateUpper,
+                        funfacts: req.body.funfacts
+                    });
+                    res.status(201).json(result[0]);
+                }
+                else{
+                    //if it does exist already
+                    //just add to the array without adding the stateCode
+                    const filter = {stateCode: stateUpper};
+                    const update = {$push: {funfacts: req.body.funfacts}};
+                    await State.findOneAndUpdate(
+                        {stateCode: stateUpper}, 
+                        {$push: {funfacts: req.body.funfacts}}
+                    );
+                    const result = await State.find({ stateCode: stateUpper}).exec();
+                    res.status(201).json(result[0]);
+                }
+            } catch (err){
+                console.error(err);
+            }
+ 
+        }
+    }
     else{
         res.status(404);
         if(req.accepts('html'))
             res.sendFile(path.join(__dirname, '..', 'views', '404.html'));
         else if(req.accepts('json'))
             res.json({"error" : "404 Not Found"})
-    }
+    
+}
 }
 
 const deleteFunFact = async(req,res) =>{
@@ -153,7 +164,7 @@ const deleteFunFact = async(req,res) =>{
                 res.status(400).json({"message": `No Fun Facts found for ${dataHolder.state}`});   
             }
             else if(stateCheck[0].funfacts.length < req.body.index){
-                res.status(400).json({"message": `No Fun Facts found at that index for ${dataHolder.state}`}); 
+                res.status(400).json({"message": `No Fun Fact found at that index for ${dataHolder.state}`}); 
             }
             else{
                 const oneToDelete = stateCheck[0].funfacts[req.body.index-1];
@@ -163,7 +174,7 @@ const deleteFunFact = async(req,res) =>{
             
                 );
                 const afterUpdate = await State.find({ stateCode: upperState}).exec();
-                res.json(afterUpdate);
+                res.json(afterUpdate[0]);
             }    
         } catch (err){
             console.error(err);
@@ -196,7 +207,7 @@ const changeFunFact = async(req, res) =>{
                 res.status(400).json({"message": `No Fun Facts found for ${dataHolder.state}`});   
             }
             else if(stateCheck[0].funfacts.length < req.body.index){
-                res.json({"message": `No Fun Facts found at that index for ${dataHolder.state}`}); 
+                res.json({"message": `No Fun Fact found at that index for ${dataHolder.state}`}); 
             }
             else{
                 
@@ -205,7 +216,7 @@ const changeFunFact = async(req, res) =>{
                     {$set: {[`funfacts.${[req.body.index-1]}`]: req.body.funfact}}
                 );
                 const afterUpdate = await State.find({ stateCode: upperState}).exec();
-                res.json(afterUpdate);
+                res.json(afterUpdate[0]);
             }
                
         } catch (err){
